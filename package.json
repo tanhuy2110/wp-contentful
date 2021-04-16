@@ -1,0 +1,26 @@
+{
+	"name": "migration-contentful",
+	"version": "1.0.0",
+	"description": "Wordpress To Contentful",
+	"main": "index.js",
+	"scripts": {
+		"start": "node src"
+	},
+	"keywords": [
+		"migration",
+		"contentful"
+	],
+	"author": "Liku2110",
+	"license": "ISC",
+	"dependencies": {
+		"axios": "^0.21.1",
+		"contentful-management": "^7.15.1",
+		"dotenv": "^8.2.0",
+		"fs": "^0.0.1-security",
+		"fs-extra": "^9.1.0",
+		"glob": "^7.1.6",
+		"listr": "^0.14.3",
+		"node-fetch": "^2.6.1",
+		"turndown": "^7.0.0"
+	}
+}
