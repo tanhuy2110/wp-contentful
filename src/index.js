@@ -1,24 +1,35 @@
-const Listr = require("listr");
+require('dotenv').config();
 
-const testConfig = require("./setup/test-config");
-const cleanDist = require("./setup/clean-dist");
+const { async } = require('rxjs');
+const createClient = require("./contentful/create-client");
+const creatContentModel = require("./contentful/create-content-model");
+const fetchDataWP = require('./wordpress/fetch-data-wordpress');
 
-const tasks = new Listr([
-	{
-        title: "Setup & Pre-flight checks",
-        task: () => {
-            return new Listr([
-                {
-                    title: "Check env config",
-                    task: () => testConfig()
-                },
-                {
-                    title: "Clean destination folder",
-                    task: () => cleanDist()
-                }
-            ]);
-        }
-    },
-]);
+const {
+	WP_API_URL,
+    CONETNT_MANAGEMENT_TOKEN,
+	CONTENT_DELIVERY_API,
+	CONTENTFUL_SPACE_ID,
+	CONTENTFUL_ENV_NAME,
+	CONTENTFUL_LOCALE,
+} = process.env;
 
-tasks.run().catch(err => console.error(err));
+async function init() {
+    try {
+        // Create Client
+        const client = await createClient(CONETNT_MANAGEMENT_TOKEN, CONTENTFUL_SPACE_ID, CONTENTFUL_ENV_NAME);
+
+        // Create Contentful Model 
+        // const createModel = await creatContentModel(client);
+
+        //  Fetch Data from WP
+        const post = await fetchDataWP(WP_API_URL);
+        // fetchDataWP(WP_API_URL).then(v => console.log(v));
+        console.log('index--------', post);
+
+    } catch (error) {
+        console.log('Error at index.js', error)
+    }
+}
+
+init();
