@@ -124,18 +124,6 @@ function createContentfulEntries(environment, promises) {
  */
 function createContentfulPosts(environment, assets, wpData) {
 	console.log(`Creating Contentful Posts...`)
-	/**
-	 * Dynamically build our Contentful data object
-	 * using the keys we built whilst reducing the WP Post data.alias
-	 *
-	 * Results:
-	 *  postTitle: {
-	 *    'en-US': wpPost.postTitle
-	 *   },
-	 *  slug: {
-	 *    'en-US': wpPost.slug
-	 *  },
-	 */
 	let promises = []
 	for (const [index, post] of wpData.posts.entries()) {
 		let postFields = {};
@@ -207,7 +195,6 @@ function createContentfulPosts(environment, assets, wpData) {
 		promises.push(postFields)
 	}
 	console.log(`Post objects created, attempting to create entries...`)
-	// createContentType(environment);
 	createContentfulEntries(environment, promises)
 		.then((result) => {
 			console.log(`The migration has completed.`);

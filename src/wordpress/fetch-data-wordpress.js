@@ -1,7 +1,6 @@
 const axios = require('axios');
 const fs = require('fs');
 const { resolve } = require('path');
-const TurndownService = require('turndown');
 
 /**
  * API Endpoints that we'd like to receive data from
@@ -23,56 +22,6 @@ let apiData = {}
  * Object to store Contentful Data in.
  */
 let contentfulData = []
-
-/**
- * Markdown / Content conversion functions.
- */
-// const turndownService = new TurndownService({
-//   	codeBlockStyle: 'fenced'
-// })
-
-/**
- * Convert HTML codeblocks to Markdown codeblocks.
- */
-// turndownService.addRule('fencedCodeBlock', {
-// 	filter: function (node, options) {
-// 		return (
-//             options.codeBlockStyle === 'fenced' &&
-//             node.nodeName === 'PRE' &&
-//             node.firstChild &&
-//             node.firstChild.nodeName === 'CODE'
-// 		)
-// 	},
-// 	replacement: function (content, node, options) {
-// 		let className = node.firstChild.getAttribute('class') || ''
-// 		let language = (className.match(/language-(\S+)/) || [null, ''])[1]
-
-// 		return (
-//             '\n\n' + options.fence + language + '\n' +
-//             node.firstChild.textContent +
-//             '\n' + options.fence + '\n\n'
-// 		)
-// 	}
-// })
-
-/**
- * Convert inline HTML images to inline markdown image format.
- */
-// turndownService.addRule('replaceWordPressImages', {
-// 	filter: ['img'],
-// 	replacement: function(content, node, options) {
-// 		let assetUrl = contentfulData.assets.filter(asset => {
-// 			let assertFileName = asset.split('/').pop()
-// 			let nodeFileName = node.getAttribute('src').split('/').pop()
-
-// 			if (assertFileName === nodeFileName) {
-// 				return asset
-// 			}
-// 		})[0];
-
-// 		return `![${node.getAttribute('alt')}](${assetUrl})`
-// 	}
-// })
 
 function getAllData(URLs){
   	return Promise.all(URLs.map(fetchData));
