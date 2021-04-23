@@ -1,5 +1,6 @@
 const axios = require('axios');
 const fs = require('fs');
+const { resolve } = require('path');
 const TurndownService = require('turndown');
 
 /**
@@ -26,55 +27,52 @@ let contentfulData = []
 /**
  * Markdown / Content conversion functions.
  */
-const turndownService = new TurndownService({
-  	codeBlockStyle: 'fenced'
-})
+// const turndownService = new TurndownService({
+//   	codeBlockStyle: 'fenced'
+// })
 
 /**
  * Convert HTML codeblocks to Markdown codeblocks.
  */
-turndownService.addRule('fencedCodeBlock', {
-	filter: function (node, options) {
-		return (
-            options.codeBlockStyle === 'fenced' &&
-            node.nodeName === 'PRE' &&
-            node.firstChild &&
-            node.firstChild.nodeName === 'CODE'
-		)
-	},
-	replacement: function (content, node, options) {
-		let className = node.firstChild.getAttribute('class') || ''
-		let language = (className.match(/language-(\S+)/) || [null, ''])[1]
+// turndownService.addRule('fencedCodeBlock', {
+// 	filter: function (node, options) {
+// 		return (
+//             options.codeBlockStyle === 'fenced' &&
+//             node.nodeName === 'PRE' &&
+//             node.firstChild &&
+//             node.firstChild.nodeName === 'CODE'
+// 		)
+// 	},
+// 	replacement: function (content, node, options) {
+// 		let className = node.firstChild.getAttribute('class') || ''
+// 		let language = (className.match(/language-(\S+)/) || [null, ''])[1]
 
-		return (
-            '\n\n' + options.fence + language + '\n' +
-            node.firstChild.textContent +
-            '\n' + options.fence + '\n\n'
-		)
-	}
-})
+// 		return (
+//             '\n\n' + options.fence + language + '\n' +
+//             node.firstChild.textContent +
+//             '\n' + options.fence + '\n\n'
+// 		)
+// 	}
+// })
 
 /**
  * Convert inline HTML images to inline markdown image format.
  */
-turndownService.addRule('replaceWordPressImages', {
-	filter: ['img'],
-	replacement: function(content, node, options) {
-		let assetUrl = contentfulData.assets.filter(asset => {
-			let assertFileName = asset.split('/').pop()
-			let nodeFileName = node.getAttribute('src').split('/').pop()
+// turndownService.addRule('replaceWordPressImages', {
+// 	filter: ['img'],
+// 	replacement: function(content, node, options) {
+// 		let assetUrl = contentfulData.assets.filter(asset => {
+// 			let assertFileName = asset.split('/').pop()
+// 			let nodeFileName = node.getAttribute('src').split('/').pop()
 
-			if (assertFileName === nodeFileName) {
-				return asset
-			}
-		})[0];
+// 			if (assertFileName === nodeFileName) {
+// 				return asset
+// 			}
+// 		})[0];
 
-		return `![${node.getAttribute('alt')}](${assetUrl})`
-	}
-})
-
-
-
+// 		return `![${node.getAttribute('alt')}](${assetUrl})`
+// 	}
+// })
 
 function getAllData(URLs){
   	return Promise.all(URLs.map(fetchData));
@@ -122,6 +120,23 @@ function getPostLabels(postItems, labelType) {
 	return labels
 }
 
+function getCategorySlug(postItems, labelType) {
+	let labels = []
+	let apiTag = getApiDataType(labelType)[0];
+
+	for (const labelId of postItems) {
+		let labelName = apiTag.data.filter(obj => {
+            if (obj.id === labelId) {
+                return obj.slug
+            }
+		});
+
+		labels.push(labelName[0].slug)
+	}
+
+	return labels
+}
+
 function getPostBodyImages(postData) {
 	// console.log(`- Getting content images`)
 	let imageRegex = /<img\s[^>]*?src\s*=\s*['\"]([^'\"]*?)['\"][^>]*?>/g
@@ -158,14 +173,13 @@ function getPostBodyImages(postData) {
 }
 
 function writeDataToFile(dataTree, dataType) {
-	console.log(`Writing data to a file`)
+	console.log(`- Writing data to a file`)
 
 	fs.writeFile(`./${dataType}.json`, JSON.stringify(dataTree, null, 2), (err) => {
 		if (err) {
 			console.error(err);
 			return;
 		};
-		console.log(`writeDataToFile...Done!`)
 	});
 }
 
@@ -174,10 +188,10 @@ function mapData() {
 		apiData[index].endpoint = key
 	}
 
-	console.log(`Reducing API data to only include fields we want`)
+	console.log(`- Reducing API data to only include fields we want`)
 	let apiPosts = getApiDataType('posts')[0];
 	for (let [key, postData] of Object.entries(apiPosts.data)) {
-		console.log(`Parsing Post: ${postData.slug}`)
+		console.log(`-- Parsing Post: ${postData.slug}`)
 		let fieldData = 
 		{
 			id: postData.id,
@@ -188,7 +202,7 @@ function mapData() {
 			publishDate: postData.date_gmt + '+00:00',
 			featuredImage: postData.featured_media,
 			tags: getPostLabels(postData.tags, 'tags'),
-			categories: getPostLabels(postData.categories, 'categories'),
+			categories: getCategorySlug(postData.categories, 'categories'),
 			contentImages: getPostBodyImages(postData)
 		}
 		wpData.posts.push(fieldData);
@@ -196,7 +210,7 @@ function mapData() {
 
 	let apiCategories = getApiDataType('categories')[0];
 	for (let [key, categoryData] of Object.entries(apiCategories.data)) {
-		console.log(`Parsing Category: ${categoryData.slug}`)
+		console.log(`-- Parsing Category: ${categoryData.slug}`)
 		let fieldData = 
 		{
 			name: categoryData.name,
@@ -204,27 +218,29 @@ function mapData() {
 		}
 		wpData.categories.push(fieldData);
 	}
-
 	writeDataToFile(wpData, 'wpData');
 
-	return new Promise.resolve(wpData);
+	return wpData;
 }
 
 function fetchPosts(domain) {
     let promises = [];
-    console.log(`Getting WordPress API data`)
+    console.log(`- Getting WordPress API data`)
     for (const [key, value] of Object.entries(wpData)) {
-        let wpUrl = `${domain}${key}?per_page=1`
+        let wpUrl = `${domain}${key}?per_page=99`
         promises.push(wpUrl)
     }
    
-    getAllData(promises)
+    const data = getAllData(promises)
     .then(response =>{
         apiData = response;
-        mapData();
+        const dataWP = mapData();
+		return dataWP;
     }).catch(error => {
         console.log(error)
     })
+
+	return data;
 }
 
 module.exports = fetchPosts;
